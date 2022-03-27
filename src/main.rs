@@ -6,10 +6,14 @@ use clap::Parser;
 #[clap(version = "1.0")]
 #[clap(about = "Searches through collections of rutudu lists", long_about = None)]
 struct Args{
-    #[clap(required = true, parse(from_os_str))]
-    term: Vec<String>,
+    // #[clap(required = true, parse(from_os_str))]
+    #[clap(required = true)]
+    search_terms: Vec<String>,
 }
 
 fn main() {
-    println!("Hello, world!");
+
+    let args = Args::parse();
+
+    println!("rtdfd {:?}", args.search_terms);
 }
