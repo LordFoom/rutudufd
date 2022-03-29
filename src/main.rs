@@ -18,7 +18,10 @@ struct Args{
 ///Scan directory and return list or rutudu (*.rtd) files
 fn scan_directory(dir:Option<&str>) -> Result<Vec<Path>>{
     let scan_dir = dir.unwrap_or(".");//default to the current directory
-    let result = fs::read_dir(scan_dir)?;//simple version we
+    let rx = Regex::new(r"^.*\.rtd$");
+    let result = fs::read_dir(scan_dir)?;
+
+
 }
 /// Go through all rtd files and find matches for the search terms
 /// printing out the files and the  matches
