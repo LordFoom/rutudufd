@@ -1,8 +1,10 @@
+use std::ffi::OsString;
 use std::path::{Path};
 use std::fs;
 use clap::Parser;
 use color_eyre::Report;
 use color_eyre::eyre::Result;
+use regex::Regex;
 
 #[derive(Parser, Debug)]
 #[clap(name = "RutuduFD")]
@@ -16,12 +18,17 @@ struct Args{
 }
 
 ///Scan directory and return list or rutudu (*.rtd) files
-fn scan_directory(dir:Option<&str>) -> Result<Vec<Path>>{
+fn scan_directory(dir:Option<&str>) -> Result<Vec<String>>{
     let scan_dir = dir.unwrap_or(".");//default to the current directory
-    let rx = Regex::new(r"^.*\.rtd$");
-    let result = fs::read_dir(scan_dir)?;
-
-
+    let ext = OsString::from("rtd");
+    let mut rtd_files:Vec<String> = fs::read_dir(scan_dir)?
+        .filter_map(|r| r.ok())
+        .map(|f| f.path())
+        .filter(|path| path.extension() == Some(&ext) )
+         .map(|entry| String::from(entry.to_str().unwrap()))
+        .collect();
+    rtd_files.sort();
+    Ok(rtd_files)
 }
 /// Go through all rtd files and find matches for the search terms
 /// printing out the files and the  matches
@@ -38,4 +45,5 @@ fn main()->Result<()> {
     let args = Args::parse();
 
     println!("rtdfd {:?}", args.search_terms);
+    Ok(())
 }
