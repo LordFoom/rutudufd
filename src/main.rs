@@ -4,7 +4,6 @@ use std::fs;
 use clap::Parser;
 use color_eyre::Report;
 use color_eyre::eyre::Result;
-use regex::Regex;
 
 #[derive(Parser, Debug)]
 #[clap(name = "RutuduFD")]
