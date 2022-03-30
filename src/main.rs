@@ -46,3 +46,14 @@ fn main()->Result<()> {
     println!("rtdfd {:?}", args.search_terms);
     Ok(())
 }
+
+#[cfg(test)]
+pub mod tests{
+    use super::*;
+    use color_eyre::eyre::Result;
+
+    #[test]
+    fn scan_directory()->Result<()>{
+       Ok(())
+    }
+}
