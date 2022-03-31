@@ -1,9 +1,12 @@
 use std::ffi::OsString;
 use std::path::{Path};
 use std::fs;
+use std::sync::Once;
 use clap::Parser;
 use color_eyre::Report;
 use color_eyre::eyre::Result;
+use tracing::{info, Level};
+use tracing_subscriber::FmtSubscriber;
 
 #[derive(Parser, Debug)]
 #[clap(name = "RutuduFD")]
@@ -38,6 +41,17 @@ fn search_rtd_db_files() -> Result<(), Report> {
     Ok(())
 }
 
+static INIT: Once = Once::new();
+
+fn init_logging(){
+    INIT.call_once(||{
+        let subs = FmtSubscriber::builder()
+            .with_max_level(Level::TRACE)
+            .finish();
+
+        tracing::subscriber::set_global_default(subs).expect("setting stdout logger failed");
+    });
+}
 fn main()->Result<()> {
     color_eyre::install()?;
 
@@ -54,6 +68,7 @@ pub mod tests{
 
     #[test]
     fn scan_directory()->Result<()>{
+        info!("")
        Ok(())
     }
 }
