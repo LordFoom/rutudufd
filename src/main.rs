@@ -68,7 +68,8 @@ pub mod tests{
 
     #[test]
     fn scan_directory()->Result<()>{
-        info!("")
-       Ok(())
+        init_logging();
+        info!("Scanning directory test...");
+        Ok(())
     }
 }
