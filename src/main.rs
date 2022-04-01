@@ -69,7 +69,20 @@ pub mod tests{
     #[test]
     fn scan_directory()->Result<()>{
         init_logging();
-        info!("Scanning directory test...");
+        info!("Scanning directory test fired...");
+        //ensure at least one rtd file exists
+        std::fs::write("test_scan.rtd", "");
+        let result = super::scan_directory(None);
+        if let Ok(v) = super::scan_directory(None){
+            info!("Directory scanned, found {} entries", v.len());
+            // for s in &v{
+            //     info!("{}", s);
+            // }
+            assert!(v.iter().any(|s|{ s== "./test_scan.rtd"}));
+        }else{
+            panic!("Could not find created file");
+        };
+
         Ok(())
     }
 }
