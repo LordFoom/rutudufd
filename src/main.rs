@@ -1,5 +1,4 @@
 use std::ffi::OsString;
-use std::path::{Path};
 use std::fs;
 use std::sync::Once;
 use clap::Parser;
@@ -71,18 +70,18 @@ pub mod tests{
         init_logging();
         info!("Scanning directory test fired...");
         //ensure at least one rtd file exists
-        std::fs::write("test_scan.rtd", "");
-        let result = super::scan_directory(None);
+        let path = "./test_scan.rtd";
+        std::fs::write(path, "")?;
         if let Ok(v) = super::scan_directory(None){
             info!("Directory scanned, found {} entries", v.len());
             // for s in &v{
             //     info!("{}", s);
             // }
-            assert!(v.iter().any(|s|{ s== "./test_scan.rtd"}));
+            assert!(v.iter().any(|s|{ s== path }));
         }else{
             panic!("Could not find created file");
         };
-
+        std::fs::remove_file(path)?;
         Ok(())
     }
 }
