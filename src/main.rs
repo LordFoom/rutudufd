@@ -16,6 +16,8 @@ struct Args{
     // #[clap(required = true, parse(from_os_str))]
     #[clap(required = true)]
     search_terms: Vec<String>,
+    #[clap(short, long)]
+    verbose: bool
 }
 
 ///Scan directory and return list or rutudu (*.rtd) files
@@ -33,7 +35,9 @@ fn scan_directory(dir:Option<&str>) -> Result<Vec<String>>{
 }
 /// Go through all rtd files and find matches for the search terms
 /// printing out the files and the  matches
-fn search_rtd_db_files() -> Result<(), Report> {
+fn search_rtd_db_files(terms: Vec<&str>,dir:Option<&str>) -> Result<(), Report> {
+
+    let rtd_files = scan_directory(dir)?;
 
 
     //scan the  files
@@ -42,21 +46,37 @@ fn search_rtd_db_files() -> Result<(), Report> {
 
 static INIT: Once = Once::new();
 
-fn init_logging(){
+fn init_logging(verbose:bool){
     INIT.call_once(||{
+        let log_level = if verbose {
+            Level::TRACE
+        }else{
+            Level::ERROR
+        };
         let subs = FmtSubscriber::builder()
-            .with_max_level(Level::TRACE)
+            .with_max_level(log_level)
             .finish();
 
         tracing::subscriber::set_global_default(subs).expect("setting stdout logger failed");
     });
 }
+
+fn init(verbose:bool) -> Result<()>{
+    if std::env::var("RUST_LIB_BACKTRACE").is_err(){
+        std::env::set_var("RUST_LIB_BACKTRACE", "1")
+    }
+
+    Ok(())
+}
+
 fn main()->Result<()> {
     color_eyre::install()?;
 
-    let args = Args::parse();
 
-    println!("rtdfd {:?}", args.search_terms);
+    let args = Args::parse();
+    let terms = args.search_terms;
+
+    info!("rtdfd searching for {:?}", &terms);
     Ok(())
 }
 
@@ -67,7 +87,7 @@ pub mod tests{
 
     #[test]
     fn scan_directory()->Result<()>{
-        init_logging();
+        init_logging(true);
         info!("Scanning directory test fired...");
         //ensure at least one rtd file exists
         let path = "./test_scan.rtd";
