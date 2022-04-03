@@ -19,7 +19,32 @@ struct Args{
     #[clap(short, long)]
     verbose: bool
 }
+static INIT: Once = Once::new();
 
+fn init_logging(verbose:bool){
+    INIT.call_once(||{
+        let log_level = if verbose {
+            Level::TRACE
+        }else{
+            Level::ERROR
+        };
+        let subs = FmtSubscriber::builder()
+            .with_max_level(log_level)
+            .finish();
+
+        tracing::subscriber::set_global_default(subs).expect("setting stdout logger failed");
+    });
+}
+
+fn init(verbose:bool) -> Result<()>{
+    if std::env::var("RUST_LIB_BACKTRACE").is_err(){
+        std::env::set_var("RUST_LIB_BACKTRACE", "1")
+    }
+
+    init_logging(verbose);
+
+    Ok(())
+}
 ///Scan directory and return list or rutudu (*.rtd) files
 fn scan_directory(dir:Option<&str>) -> Result<Vec<String>>{
     let scan_dir = dir.unwrap_or(".");//default to the current directory
@@ -44,30 +69,7 @@ fn search_rtd_db_files(terms: Vec<&str>,dir:Option<&str>) -> Result<(), Report> 
     Ok(())
 }
 
-static INIT: Once = Once::new();
 
-fn init_logging(verbose:bool){
-    INIT.call_once(||{
-        let log_level = if verbose {
-            Level::TRACE
-        }else{
-            Level::ERROR
-        };
-        let subs = FmtSubscriber::builder()
-            .with_max_level(log_level)
-            .finish();
-
-        tracing::subscriber::set_global_default(subs).expect("setting stdout logger failed");
-    });
-}
-
-fn init(verbose:bool) -> Result<()>{
-    if std::env::var("RUST_LIB_BACKTRACE").is_err(){
-        std::env::set_var("RUST_LIB_BACKTRACE", "1")
-    }
-
-    Ok(())
-}
 
 fn main()->Result<()> {
     color_eyre::install()?;
@@ -75,6 +77,8 @@ fn main()->Result<()> {
 
     let args = Args::parse();
     let terms = args.search_terms;
+    let verbose = args.verbose;
+    init(verbose);
 
     info!("rtdfd searching for {:?}", &terms);
     Ok(())
