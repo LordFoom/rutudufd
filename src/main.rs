@@ -16,8 +16,11 @@ struct Args{
     // #[clap(required = true, parse(from_os_str))]
     #[clap(required = true)]
     search_terms: Vec<String>,
+    #[clap(short, long, default_value = "./")]
+    search_dir: String,
     #[clap(short, long)]
-    verbose: bool
+    verbose: bool,
+
 }
 static INIT: Once = Once::new();
 
@@ -36,6 +39,7 @@ fn init_logging(verbose:bool){
     });
 }
 
+///Initialize our things
 fn init(verbose:bool) -> Result<()>{
     if std::env::var("RUST_LIB_BACKTRACE").is_err(){
         std::env::set_var("RUST_LIB_BACKTRACE", "1")
@@ -46,8 +50,8 @@ fn init(verbose:bool) -> Result<()>{
     Ok(())
 }
 ///Scan directory and return list or rutudu (*.rtd) files
-fn scan_directory(dir:Option<&str>) -> Result<Vec<String>>{
-    let scan_dir = dir.unwrap_or(".");//default to the current directory
+fn scan_directory(scan_dir:&str) -> Result<Vec<String>>{
+    // let scan_dir = dir.unwrap_or(".");//default to the current directory
     let ext = OsString::from("rtd");
     let mut rtd_files:Vec<String> = fs::read_dir(scan_dir)?
         .filter_map(|r| r.ok())
@@ -60,7 +64,7 @@ fn scan_directory(dir:Option<&str>) -> Result<Vec<String>>{
 }
 /// Go through all rtd files and find matches for the search terms
 /// printing out the files and the  matches
-fn search_rtd_db_files(terms: Vec<&str>,dir:Option<&str>) -> Result<(), Report> {
+fn search_rtd_db_files(terms: Vec<String>, dir:&str) -> Result<(), Report> {
 
     let rtd_files = scan_directory(dir)?;
 
@@ -72,15 +76,25 @@ fn search_rtd_db_files(terms: Vec<&str>,dir:Option<&str>) -> Result<(), Report> 
 
 
 fn main()->Result<()> {
+    //want this before anything else
     color_eyre::install()?;
 
 
     let args = Args::parse();
-    let terms = args.search_terms;
     let verbose = args.verbose;
-    init(verbose);
-
+    if let Err(e) = init(verbose){
+        panic!("Unable to init {}", e);
+    }
+    let terms = args.search_terms;
+    let dir = args.search_dir;
     info!("rtdfd searching for {:?}", &terms);
+    info!("Searching in {}", dir);
+
+    //let files = scan_directory(dir);
+    if let Err(e) = search_rtd_db_files(terms, &dir){
+        panic!("Could not search files: {} ", e);
+    }
+
     Ok(())
 }
 
@@ -96,7 +110,7 @@ pub mod tests{
         //ensure at least one rtd file exists
         let path = "./test_scan.rtd";
         std::fs::write(path, "")?;
-        if let Ok(v) = super::scan_directory(None){
+        if let Ok(v) = super::scan_directory("."){
             info!("Directory scanned, found {} entries", v.len());
             // for s in &v{
             //     info!("{}", s);
