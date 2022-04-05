@@ -3,7 +3,8 @@ use std::fs;
 use std::sync::Once;
 use clap::Parser;
 use color_eyre::Report;
-use color_eyre::eyre::Result;
+use color_eyre::eyre::{eyre, Result};
+use rusqlite::Connection;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
@@ -21,6 +22,12 @@ struct Args{
     #[clap(short, long)]
     verbose: bool,
 
+}
+
+struct SearchResult{
+    title: String,
+    description: String,
+    list_name: String,
 }
 static INIT: Once = Once::new();
 
@@ -66,10 +73,32 @@ fn scan_directory(scan_dir:&str) -> Result<Vec<String>>{
 /// printing out the files and the  matches
 fn search_rtd_db_files(terms: Vec<String>, dir:&str) -> Result<(), Report> {
 
+    if terms.len() == 0{
+        return Err(eyre!("Must have at least one search term"));
+    }
     let rtd_files = scan_directory(dir)?;
+    //go through each database, looking for our keywords
+    let mut results = Vec::<SearchResult>::new();
 
+    //start with one term
+    // let term = terms.get(0).ok_or(Err(eyre!("Unable to get first search term"))).unwrap();
+    let term = terms.get(0).unwrap();
+    for list in rtd_files {
+            let conn = Connection::open(list.clone())?;
+            let mut stmt = conn
+                .prepare("select title, description from rutudu_list where title like :title or description like :description ")?;
+            let search_result_iter = stmt.query_map(&[":title", &term, ":description", &term], |row| {
+                Ok(SearchResult{
+                   list_name: list.clone(),
+                    title: row.get(0)?,
+                    description:  row.get(1)?,
+                })
+            })?;
+            search_result_iter.for_each(|sr| {
+              results.push(sr.unwrap());
+            });
+        };
 
-    //scan the  files
     Ok(())
 }
 
