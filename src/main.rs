@@ -7,6 +7,7 @@ use color_eyre::eyre::{eyre, Result};
 use rusqlite::Connection;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
+use std::fmt::{Display, Formatter};
 
 #[derive(Parser, Debug)]
 #[clap(name = "RutuduFD")]
@@ -28,6 +29,12 @@ struct SearchResult{
     title: String,
     description: String,
     list_name: String,
+}
+
+impl Display for SearchResult{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} => {} : {}", self.list_name, self.title, self.description)
+    }
 }
 static INIT: Once = Once::new();
 
@@ -71,7 +78,7 @@ fn scan_directory(scan_dir:&str) -> Result<Vec<String>>{
 }
 /// Go through all rtd files and find matches for the search terms
 /// printing out the files and the  matches
-fn search_rtd_db_files(terms: Vec<String>, dir:&str) -> Result<(), Report> {
+fn search_rtd_db_files(terms: Vec<String>, dir:&str) -> Result<Vec<SearchResult>, Report> {
 
     if terms.len() == 0{
         return Err(eyre!("Must have at least one search term"));
@@ -99,10 +106,13 @@ fn search_rtd_db_files(terms: Vec<String>, dir:&str) -> Result<(), Report> {
             });
         };
 
-    Ok(())
+    Ok(results)
 }
 
-
+fn print_results(results: Vec<SearchResult>){
+    results.iter()
+        .for_each( |r| println!("{}", r.to_string()));
+}
 
 fn main()->Result<()> {
     //want this before anything else
@@ -119,9 +129,9 @@ fn main()->Result<()> {
     info!("rtdfd searching for {:?}", &terms);
     info!("Searching in {}", dir);
 
-    //let files = scan_directory(dir);
-    if let Err(e) = search_rtd_db_files(terms, &dir){
-        panic!("Could not search files: {} ", e);
+    match search_rtd_db_files(terms, &dir){
+        Ok(results) => print_results(results),
+        Err(e) => panic!("Could not search files: {} ", e),
     }
 
     Ok(())
