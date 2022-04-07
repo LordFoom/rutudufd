@@ -87,14 +87,18 @@ fn search_rtd_db_files(terms: Vec<String>, dir:&str) -> Result<Vec<SearchResult>
     //go through each database, looking for our keywords
     let mut results = Vec::<SearchResult>::new();
 
+    info!("Search term: {:?}", terms);
     //start with one term
     // let term = terms.get(0).ok_or(Err(eyre!("Unable to get first search term"))).unwrap();
     let term = terms.get(0).unwrap();
     for list in rtd_files {
+            info!("Checking file: {}", list);
+
             let conn = Connection::open(list.clone())?;
             let mut stmt = conn
-                .prepare("select title, description from rutudu_list where title like :title or description like :description ")?;
-            let search_result_iter = stmt.query_map(&[":title", &term, ":description", &term], |row| {
+                .prepare("select title, entry from rutudu_list where title like :title or entry like :entry ")?;
+            let search_result_iter = stmt.query_map(&[( ":title", &term ), (":entry", &term)], |row| {
+                info!("Found result in {}", list.clone());
                 Ok(SearchResult{
                    list_name: list.clone(),
                     title: row.get(0)?,
