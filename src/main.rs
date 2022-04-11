@@ -8,6 +8,7 @@ use rusqlite::Connection;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 use std::fmt::{Display, Formatter};
+use colored::{ColoredString, Colorize};
 
 #[derive(Parser, Debug)]
 #[clap(name = "RutuduFD")]
@@ -29,11 +30,21 @@ struct SearchResult{
     title: String,
     description: String,
     list_name: String,
+    search_terms: Vec<String>,
 }
 
 impl Display for SearchResult{
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} => {} : {}", self.list_name, self.title, self.description)
+        let mut colored_title = String::new();
+        self.title.split_whitespace()
+            .for_each(|word| {
+                if self.search_terms.contains(&word.to_string()){
+                    colored_title = format!("{} {}", colored_title, word.red());
+                }else{
+                    colored_title = format!("{} {}", colored_title, word.white());
+                };
+            });
+        write!(f, "{} => {} : {}", self.list_name, colored_title, self.description)
     }
 }
 static INIT: Once = Once::new();
@@ -78,19 +89,19 @@ fn scan_directory(scan_dir:&str) -> Result<Vec<String>>{
 }
 /// Go through all rtd files and find matches for the search terms
 /// printing out the files and the  matches
-fn search_rtd_db_files(terms: Vec<String>, dir:&str) -> Result<Vec<SearchResult>, Report> {
+fn search_rtd_db_files(search_terms: Vec<String>, dir:&str) -> Result<Vec<SearchResult>, Report> {
 
-    if terms.len() == 0{
+    if search_terms.len() == 0{
         return Err(eyre!("Must have at least one search term"));
     }
     let rtd_files = scan_directory(dir)?;
     //go through each database, looking for our keywords
     let mut results = Vec::<SearchResult>::new();
 
-    info!("Search term: {:?}", terms);
+    info!("Search term: {:?}", search_terms);
     //start with one term
     // let term = terms.get(0).ok_or(Err(eyre!("Unable to get first search term"))).unwrap();
-    let term = terms.get(0).unwrap();
+    let term = search_terms.get(0).unwrap();
     for list in rtd_files {
             info!("Checking file: {}", list);
 
@@ -103,6 +114,7 @@ fn search_rtd_db_files(terms: Vec<String>, dir:&str) -> Result<Vec<SearchResult>
                    list_name: list.clone(),
                     title: row.get(0)?,
                     description:  row.get(1)?,
+                    search_terms: search_terms.clone(),
                 })
             })?;
             search_result_iter.for_each(|sr| {
