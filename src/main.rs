@@ -8,7 +8,7 @@ use rusqlite::Connection;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 use std::fmt::{Display, Formatter};
-use colored::{ColoredString, Colorize};
+use colored::Colorize;
 
 #[derive(Parser, Debug)]
 #[clap(name = "RutuduFD")]
