@@ -108,7 +108,7 @@ fn search_rtd_db_files(search_terms: Vec<String>, dir:&str) -> Result<Vec<Search
             let conn = Connection::open(list.clone())?;
             let mut stmt = conn
                 .prepare("select title, entry from rutudu_list where title like :title or entry like :entry ")?;
-            let search_result_iter = stmt.query_map(&[( ":title", &term ), (":entry", &term)], |row| {
+            let search_result_iter = stmt.query_map(&[( ":title", &format!("%{}%", &term) ), (":entry", &format!("%{}%", &term))], |row| {
                 info!("Found result in {}", list.clone());
                 Ok(SearchResult{
                    list_name: list.clone(),
