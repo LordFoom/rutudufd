@@ -33,20 +33,26 @@ struct SearchResult{
     search_terms: Vec<String>,
 }
 
-impl Display for SearchResult{
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let mut colored_title = String::new();
-        self.title.split_whitespace()
-            .for_each(|word| {
-                if self.search_terms.contains(&word.to_string()){
-                    colored_title = format!("{} {}", colored_title, word.red());
-                }else{
-                    colored_title = format!("{} {}", colored_title, word.white());
-                };
-            });
-        write!(f, "{} => {} : {}", self.list_name, colored_title, self.description)
-    }
-}
+// impl Display for SearchResult{
+//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+//         let mut colored_title = String::new();
+//         self.title.split_whitespace()
+//             .for_each(|word| {
+//                 if self.search_terms.contains(&word.to_string()){
+//                     colored_title = format!("{} {}", colored_title, word.red());
+//                 }else{
+//                     colored_title = format!("{} {}", colored_title, word.white());
+//                 };
+//             });
+//         let mut colored_description = String::new();
+//         self.description.split_whitespace()
+//             .for_each(|word|{
+//                 if self.search_terms.contains()
+//             })
+//         write!(f, "{} => {} : {}", self.list_name, colored_title, self.description)
+//     }
+//
+// }
 static INIT: Once = Once::new();
 
 fn init_logging(verbose:bool){
@@ -127,7 +133,30 @@ fn search_rtd_db_files(search_terms: Vec<String>, dir:&str) -> Result<Vec<Search
 
 fn print_results(results: Vec<SearchResult>){
     results.iter()
-        .for_each( |r| println!("{}", r.to_string()));
+        .for_each( |r|{
+            print_result(r);
+        });
+}
+
+fn print_result(search_result: &SearchResult){
+    let mut colored_title = String::new();
+    search_result.title.split_whitespace()
+        .for_each(|word| {
+            colored_title = highlight_word(&colored_title, &word, &search_result.search_terms );
+        });
+    let mut colored_description = String::new();
+    search_result.description.split_whitespace()
+        .for_each(|word|{
+            colored_description = highlight_word(&colored_description, &word, &search_result.search_terms);
+        });
+    println!("{} => {} : {}", search_result.list_name, colored_title, colored_description);
+}
+fn highlight_word(total_string:&str, word: &str, search_terms:&Vec<String>)->String{
+    if search_terms.contains(&word.to_string()){
+        format!("{} {}", total_string, word.red())
+    }else{
+        format!("{} {}", total_string, word.white())
+    }
 }
 
 fn main()->Result<()> {
