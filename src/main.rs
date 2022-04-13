@@ -7,7 +7,6 @@ use color_eyre::eyre::{eyre, Result};
 use rusqlite::Connection;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
-use std::fmt::{Display, Formatter};
 use colored::Colorize;
 
 #[derive(Parser, Debug)]
